@@ -1,0 +1,36 @@
+{
+  "_note": "Dealer roster for PQM-Dealer. Kathan edits this file directly, commits, and pushes — dealers pick up the change on next reload. Each dealer needs: id (kebab-case), name, brandColor (hex), contact, emails[] (registered employees), passphrase (shared per dealer). Optional: logo (path relative to repo root — put PNG in /logos/), tagline. Later phase: Google Sheet sync layered on top.",
+  "dealers": [
+    {
+      "id": "growel",
+      "name": "Growel",
+      "tagline": "AV Systems Integrator",
+      "brandColor": "#0057B7",
+      "logo": "logos/growel.png",
+      "contact": {
+        "phone": "+91 98765 43210",
+        "email": "sales@growel.example"
+      },
+      "emails": [
+        "ravi@growel.example",
+        "sales@growel.example"
+      ],
+      "passphrase": "GrowelVR2026"
+    },
+    {
+      "id": "dd",
+      "name": "DD Enterprise",
+      "tagline": "LED Solutions Distributor",
+      "brandColor": "#8B6F30",
+      "logo": "logos/dd.png",
+      "contact": {
+        "phone": "+91 98765 43210",
+        "email": "hemal@ddenterprise.example"
+      },
+      "emails": [
+        "hemal@ddenterprise.example"
+      ],
+      "passphrase": "DDEnterprise2026"
+    }
+  ]
+}
