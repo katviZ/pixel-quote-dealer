@@ -1,36 +1,35 @@
 {
-  "_note": "Dealer roster for PQM-Dealer. Kathan edits this file directly, commits, and pushes — dealers pick up the change on next reload. Each dealer needs: id (kebab-case), name, brandColor (hex), contact, emails[] (registered employees), passphrase (shared per dealer). Optional: logo (path relative to repo root — put PNG in /logos/), tagline. Later phase: Google Sheet sync layered on top.",
+  "_note": "PQM-Dealer roster. 22 real dealers pulled from Kathan's ACTIVE DEALERS list (2026-07-28) + name-matched against Desktop\\VR-CRM Orgs tab. Emails + passphrases are placeholders — YOU MUST edit them before sending URLs to real dealers. See _TODO for the fill checklist.",
+  "_todo": [
+    "1. Set a real passphrase for each dealer (currently auto-generated '{id}VR2026'). Kathan-shared verbally with each dealer admin.",
+    "2. Add real emails to each dealer.emails[] — one per employee at that dealer. Placeholder '{id}@dealer.example' rejects any real login.",
+    "3. Optional: set brandColor per dealer (currently VR purple #9D20D6). Pick a hex that matches their logo.",
+    "4. Optional: drop dealer PNG logos into /logos/ and set logo: 'logos/{id}.png' — currently null so header/PDF just shows dealer name.",
+    "5. Optional: fill contact.phone + contact.email so it appears in the PDF footer (currently blank).",
+    "After edits: git add dealers.json && git commit -m 'real dealer data' && git push — dealers pick up the change on next reload."
+  ],
   "dealers": [
-    {
-      "id": "growel",
-      "name": "Growel",
-      "tagline": "AV Systems Integrator",
-      "brandColor": "#0057B7",
-      "logo": "logos/growel.png",
-      "contact": {
-        "phone": "+91 98765 43210",
-        "email": "sales@growel.example"
-      },
-      "emails": [
-        "ravi@growel.example",
-        "sales@growel.example"
-      ],
-      "passphrase": "GrowelVR2026"
-    },
-    {
-      "id": "dd",
-      "name": "DD Enterprise",
-      "tagline": "LED Solutions Distributor",
-      "brandColor": "#8B6F30",
-      "logo": "logos/dd.png",
-      "contact": {
-        "phone": "+91 98765 43210",
-        "email": "hemal@ddenterprise.example"
-      },
-      "emails": [
-        "hemal@ddenterprise.example"
-      ],
-      "passphrase": "DDEnterprise2026"
-    }
+    { "id": "jigarbhai-raj",    "name": "Jigarbhai Raj",         "city": "",         "brandColor": "#9D20D6", "logo": null, "contact": { "phone": "", "email": "" }, "emails": ["jigarbhai-raj@dealer.example"], "passphrase": "JigarbhaiRajVR2026" },
+    { "id": "usk",              "name": "USK",                    "city": "",         "brandColor": "#9D20D6", "logo": null, "contact": { "phone": "", "email": "" }, "emails": ["usk@dealer.example"], "passphrase": "UskVR2026" },
+    { "id": "i-and-a",          "name": "I & A",                  "city": "",         "brandColor": "#9D20D6", "logo": null, "contact": { "phone": "", "email": "" }, "emails": ["i-and-a@dealer.example"], "passphrase": "IandAVR2026", "_crm_match": "I&A / I & A Siddarth (Dishank Bhai)" },
+    { "id": "mittal-bhai",      "name": "Mittal Bhai",            "city": "",         "brandColor": "#9D20D6", "logo": null, "contact": { "phone": "", "email": "" }, "emails": ["mittal-bhai@dealer.example"], "passphrase": "MittalBhaiVR2026" },
+    { "id": "bansal",           "name": "Bansal Audio Visual",    "city": "Ahmedabad","brandColor": "#9D20D6", "logo": null, "contact": { "phone": "", "email": "" }, "emails": ["bansal@dealer.example"], "passphrase": "BansalVR2026", "_crm_match": "Bansal Audio Visual (Ahmedabad)" },
+    { "id": "signet-nagpur",    "name": "Signet Nagpur",          "city": "Nagpur",   "brandColor": "#9D20D6", "logo": null, "contact": { "phone": "", "email": "" }, "emails": ["signet-nagpur@dealer.example"], "passphrase": "SignetNagpurVR2026" },
+    { "id": "growel",           "name": "Growel Infotech",        "city": "Rajkot",   "brandColor": "#0057B7", "logo": null, "contact": { "phone": "", "email": "" }, "emails": ["growel@dealer.example"], "passphrase": "GrowelVR2026", "_crm_match": "Growel Infotech (Rajkot)" },
+    { "id": "jeet-agrwal",      "name": "Jeet Agrwal",            "city": "",         "brandColor": "#9D20D6", "logo": null, "contact": { "phone": "", "email": "" }, "emails": ["jeet-agrwal@dealer.example"], "passphrase": "JeetAgrwalVR2026" },
+    { "id": "arha",             "name": "Arha Enterprise",        "city": "Vadodara", "brandColor": "#9D20D6", "logo": null, "contact": { "phone": "+91 98983 79100", "email": "support@arhaenterprise.com" }, "emails": ["arha@dealer.example", "support@arhaenterprise.com"], "passphrase": "ArhaVR2026", "_crm_match": "Arha Enterprise (Vadodara, GSTIN pending)" },
+    { "id": "tejas-anovadia",   "name": "Tejas Anovadia",         "city": "",         "brandColor": "#9D20D6", "logo": null, "contact": { "phone": "", "email": "" }, "emails": ["tejas-anovadia@dealer.example"], "passphrase": "TejasAnovadiaVR2026", "_crm_match": "Tejas Bhai Anovadiay" },
+    { "id": "data-tech",        "name": "Data Tech",              "city": "",         "brandColor": "#9D20D6", "logo": null, "contact": { "phone": "", "email": "" }, "emails": ["data-tech@dealer.example"], "passphrase": "DataTechVR2026" },
+    { "id": "ishan",            "name": "Ishan",                  "city": "",         "brandColor": "#9D20D6", "logo": null, "contact": { "phone": "", "email": "" }, "emails": ["ishan@dealer.example"], "passphrase": "IshanVR2026" },
+    { "id": "nanta",            "name": "Nanta Technologies",     "city": "",         "brandColor": "#9D20D6", "logo": null, "contact": { "phone": "", "email": "" }, "emails": ["nanta@dealer.example"], "passphrase": "NantaVR2026", "_crm_match": "Nanta Technologies / Mnt Or Nanta" },
+    { "id": "sound-sanes",      "name": "Sound Sanes",            "city": "",         "brandColor": "#9D20D6", "logo": null, "contact": { "phone": "", "email": "" }, "emails": ["sound-sanes@dealer.example"], "passphrase": "SoundSanesVR2026" },
+    { "id": "unada",            "name": "Unada",                  "city": "",         "brandColor": "#9D20D6", "logo": null, "contact": { "phone": "", "email": "" }, "emails": ["unada@dealer.example"], "passphrase": "UnadaVR2026" },
+    { "id": "penthar",          "name": "Penthar",                "city": "",         "brandColor": "#9D20D6", "logo": null, "contact": { "phone": "", "email": "" }, "emails": ["penthar@dealer.example"], "passphrase": "PentharVR2026" },
+    { "id": "aether-transit",   "name": "Aether Group Transit",   "city": "",         "brandColor": "#9D20D6", "logo": null, "contact": { "phone": "", "email": "" }, "emails": ["aether-transit@dealer.example"], "passphrase": "AetherTransitVR2026" },
+    { "id": "jignesh-surat",    "name": "Jignesh",                "city": "Surat",    "brandColor": "#9D20D6", "logo": null, "contact": { "phone": "", "email": "" }, "emails": ["jignesh-surat@dealer.example"], "passphrase": "JigneshSuratVR2026" },
+    { "id": "dhiren-gohil",     "name": "Dhiren Gohil",           "city": "",         "brandColor": "#9D20D6", "logo": null, "contact": { "phone": "", "email": "" }, "emails": ["dhiren-gohil@dealer.example"], "passphrase": "DhirenGohilVR2026" },
+    { "id": "brijesh-gandhidham","name": "Brijesh",                "city": "Gandhidham","brandColor": "#9D20D6","logo": null, "contact": { "phone": "", "email": "" }, "emails": ["brijesh-gandhidham@dealer.example"], "passphrase": "BrijeshGandhidhamVR2026" },
+    { "id": "abhishek-bhavsar", "name": "Abhishek Bhavsar",       "city": "",         "brandColor": "#9D20D6", "logo": null, "contact": { "phone": "", "email": "" }, "emails": ["abhishek-bhavsar@dealer.example"], "passphrase": "AbhishekBhavsarVR2026" },
+    { "id": "audio-orbit",      "name": "Audio Orbit",            "city": "",         "brandColor": "#9D20D6", "logo": null, "contact": { "phone": "", "email": "" }, "emails": ["audio-orbit@dealer.example"], "passphrase": "AudioOrbitVR2026" }
   ]
 }
