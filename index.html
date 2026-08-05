@@ -839,6 +839,48 @@ em,i{font-style:normal}
 .atlas-pill.warm{border-left:3px solid #E5B454}
 `;
 
+/* Derive a full accent-color family from any single hex.
+ * When a dealer is logged in we swap the VR purple family for the dealer's own
+ * brand color so the exported PDF looks like a first-party document — no more
+ * purple on an Arha teal quote. Neutral colors (cream/gold/ink) stay put.
+ *
+ * Given base #0078A8 (Arha teal), returns:
+ *   base    = #0078A8   → replaces #9D20D6 (main magenta)
+ *   deep    = darker    → replaces #793494 (deep purple accent)
+ *   darkest = darker×2  → replaces #4E1178 (spine gradient top)
+ *   light   = lighter   → replaces #C89DD9 (lavender text)
+ */
+function deriveBrand(hex){
+  const h = (hex||"#9D20D6").replace("#","");
+  const r = parseInt(h.slice(0,2),16), g = parseInt(h.slice(2,4),16), b = parseInt(h.slice(4,6),16);
+  const clamp = v => Math.max(0, Math.min(255, Math.round(v)));
+  const toHex = v => clamp(v).toString(16).padStart(2,"0");
+  const shade = (dr,dg,db) => "#"+toHex(dr)+toHex(dg)+toHex(db);
+  const darken = (f) => shade(r*(1-f), g*(1-f), b*(1-f));
+  const lighten = (f) => shade(r+(255-r)*f, g+(255-g)*f, b+(255-b)*f);
+  return {
+    base:    "#"+h.toUpperCase(),
+    deep:    darken(0.30),
+    darkest: darken(0.55),
+    light:   lighten(0.55),
+  };
+}
+
+/* Apply dealer accent to any CSS string via exact-hex replacement of the
+ * VR purple family. Neutral is a no-op. Works on both ATLAS_CSS (quote PDF)
+ * and the structural PDF's inline CSS template literal. */
+function applyBrandTheme(css, dealer){
+  if (!dealer || !dealer.brandColor) return css;
+  const s = deriveBrand(dealer.brandColor);
+  return css
+    .replaceAll("#9D20D6", s.base)
+    .replaceAll("#9d20d6", s.base)
+    .replaceAll("#793494", s.deep)
+    .replaceAll("#4E1178", s.darkest)
+    .replaceAll("#C89DD9", s.light);
+}
+function themeAtlasCSS(dealer){ return applyBrandTheme(ATLAS_CSS, dealer); }
+
 function PrintSheet({r,meta,preview,threeDSnapshot,dealer}){
   if(!r) return null;
   const cv=r.curve;
@@ -850,14 +892,14 @@ function PrintSheet({r,meta,preview,threeDSnapshot,dealer}){
   const S=()=>"§0"+ci;
   return (
     <div className={preview?"atlas-print":"vr-print atlas-print"} style={{display:preview?"block":undefined}}>
-      <style dangerouslySetInnerHTML={{__html:ATLAS_CSS}}/>
+      <style dangerouslySetInnerHTML={{__html:themeAtlasCSS(dealer)}}/>
       <div className="atlas-spine"><b>Visual Rhyme</b>{dealer?<> × <b>{dealer.name}</b></>:null} · {isCurved?"Curved Quotation":"Quotation"} · {meta.ref}</div>
       <div className="atlas-page">
 
         <div className="atlas-super">
           <span>Visual Rhyme · Ahmedabad{dealer?` · Distributed by ${dealer.name}${dealer.city?", "+dealer.city:""}${dealer.gstin?" · GSTIN "+dealer.gstin:""}`:""}</span>
           <span className="grow"></span>
-          {dealer && <span className="atlas-office" style={{background:(dealer.brandColor||"#9D20D6")+"22",color:dealer.brandColor||"#9D20D6",borderColor:(dealer.brandColor||"#9D20D6")+"55",display:"inline-flex",alignItems:"center",gap:6}}>{dealer.logo && <img src={dealer.logo} alt="" style={{height:12,width:"auto",verticalAlign:"middle"}}/>}DEALER · {dealer.name.toUpperCase()}</span>}
+          {dealer && <span className="atlas-office" style={{background:(dealer.brandColor||"#9D20D6")+"22",color:dealer.brandColor||"#9D20D6",borderColor:(dealer.brandColor||"#9D20D6")+"55",display:"inline-flex",alignItems:"center",gap:6}}>{dealer.logo && <img src={dealer.logo} alt="" style={{height:12,width:"auto",verticalAlign:"middle"}}/>}{dealer.name.toUpperCase()}</span>}
           <span className="atlas-stamp">Quotation</span>
         </div>
         <div className="atlas-brand">
@@ -2038,7 +2080,7 @@ body{background:#180d24;color:#1A1208;font-family:'Manrope',sans-serif;-webkit-f
     <div class="atlas-super">
       <span>Structural &amp; Load Specification${dealer?" · Distributed by "+dealer.name:" · Internal to fabricator"}</span>
       <span class="grow"></span>
-      ${dealer?`<span class="atlas-office" style="background:${(dealer.brandColor||"#9D20D6")}22;color:${dealer.brandColor||"#9D20D6"};border-color:${(dealer.brandColor||"#9D20D6")}55;display:inline-flex;align-items:center;gap:6px">${dealer.logo?`<img src="${dealer.logo}" alt="" style="height:12px;width:auto;vertical-align:middle"/>`:""}DEALER · ${dealer.name.toUpperCase()}</span>`:`<span class="atlas-office">OFFICE — INTERNAL</span>`}
+      ${dealer?`<span class="atlas-office" style="background:${(dealer.brandColor||"#9D20D6")}22;color:${dealer.brandColor||"#9D20D6"};border-color:${(dealer.brandColor||"#9D20D6")}55;display:inline-flex;align-items:center;gap:6px">${dealer.logo?`<img src="${dealer.logo}" alt="" style="height:12px;width:auto;vertical-align:middle"/>`:""}${dealer.name.toUpperCase()}</span>`:`<span class="atlas-office">OFFICE — INTERNAL</span>`}
       <span class="atlas-stamp">Report</span>
     </div>
     <div class="atlas-brand">
@@ -2131,7 +2173,7 @@ body{background:#180d24;color:#1A1208;font-family:'Manrope',sans-serif;-webkit-f
     const w = window.open("", "_blank");
     if (!w) { alert("Please allow popups for Pixel Quote Max so the Structural PDF can open."); return; }
     w.document.open();
-    w.document.write(html);
+    w.document.write(applyBrandTheme(html, dealer));
     w.document.close();
   };
 
