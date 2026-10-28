@@ -1,12 +1,12 @@
 /* PQM-Dealer service worker — precache the shell so the app opens
    offline after first install. Bump CACHE_VERSION whenever engine.js
    or index.html changes materially so users get the update on next open. */
-const CACHE_VERSION = "pqmd-v15"; // dealer edition — separate namespace from office (pqmo-*)
+const CACHE_VERSION = "pqmd-v16"; // dealer edition — separate namespace from office (pqmo-*)
 const SHELL = [
   "./",
   "./index.html",
   "./engine.js",
-  "./pixel-data.xml",
+  "./pixel-data.enc.json",
   "./manifest.json",
   "./vendor/react.production.min.js",
   "./vendor/react-dom.production.min.js",

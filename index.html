@@ -66,34 +66,9 @@
 <body>
 <div id="root"></div>
 
-<!-- Offline fallback DB. The editable master is pixel-data.xml (used when served over http). -->
-<script type="application/xml" id="fallback-db">
-<pixelData>
-  <meta currency="INR" curveSurchargePct="15" pixelsPerPortMini="650000" pixelsPerPortMicro="500000" controllerGst="18" installGst="18" />
-  <installTiers><tier maxArea="50" rate="300" /><tier maxArea="150" rate="200" /><tier maxArea="999999" rate="150" /></installTiers>
-  <controllers type="mini"><tier maxPorts="1" price="15000" /><tier maxPorts="2" price="25000" /><tier maxPorts="3" price="45000" /><tier maxPorts="5" price="75000" /><tier maxPorts="7" price="125000" /><tier maxPorts="999" price="150000" /></controllers>
-  <controllers type="micro"><tier maxPorts="3" price="125000" /><tier maxPorts="7" price="150000" /><tier maxPorts="12" price="200000" /><tier maxPorts="20" price="250000" /><tier maxPorts="999" price="350000" /></controllers>
-  <products>
-    <product id="outdoor" series="Reyansh Outdoor" type="MiniLED" env="outdoor" moduleW="320" moduleH="160">
-      <cabinet w="320" h="160" label="320×160mm Module" weight="1.5" type="module" /><cabinet w="640" h="640" label="640×640mm" /><cabinet w="960" h="960" label="960×960mm" /><cabinet w="960" h="1280" label="960×1280mm" /><cabinet w="1280" h="1280" label="1280×1280mm" />
-      <pitch pp="6.67" rate="5000" gst="18" sku="Reyansh Outdoor P6.67" /><pitch pp="4" rate="5500" gst="18" sku="Reyansh Outdoor P4" /><pitch pp="3" rate="7250" gst="18" sku="Reyansh Outdoor P3" /><pitch pp="2.5" rate="12500" gst="18" sku="Reyansh Outdoor P2.5" />
-    </product>
-    <product id="indoor" series="Reyansh Indoor" type="MiniLED" env="indoor" moduleW="320" moduleH="160">
-      <cabinet w="320" h="160" label="320×160mm Module" weight="1.2" type="module" /><cabinet w="640" h="480" label="640×480mm" /><cabinet w="640" h="640" label="640×640mm" />
-      <pitch pp="2.5" rate="7500" gst="18" sku="Reyansh Indoor P2.5" /><pitch pp="2" rate="9500" gst="18" sku="Reyansh Indoor P2 (SMD)" /><pitch pp="1.86" rate="10500" gst="18" sku="Reyansh Indoor P1.86" /><pitch pp="1.56" rate="23000" gst="28" sku="Reyansh Indoor P1.56" />
-    </product>
-    <product id="microled" series="Leynna Cosmo" type="MicroLED" env="indoor" moduleW="300" moduleH="168.75">
-      <cabinet w="600" h="337.5" label="600×337.5mm" /><cabinet w="609.6" h="342.9" label="609.6×342.9mm" />
-      <pitch pp="1.56" rate="23000" gst="28" sku="Leynna Cosmo P1.56" /><pitch pp="1.25" rate="25000" gst="28" sku="Leynna Cosmo P1.25" /><pitch pp="1.17" rate="23500" gst="28" sku="Leynna Cosmo P1.17" /><pitch pp="0.93" rate="35000" gst="28" sku="Leynna Cosmo P0.93 Virtual" /><pitch pp="0.78" rate="60000" gst="28" sku="Leynna Cosmo P0.78" />
-    </product>
-    <product id="sapphire" series="Leynna Sapphire" type="MicroLED" env="indoor" moduleW="300" moduleH="168.75">
-      <cabinet w="600" h="337.5" label="600×337.5mm" /><cabinet w="609.6" h="342.9" label="609.6×342.9mm" />
-      <pitch pp="1.53" rate="37800" gst="28" sku="Leynna Sapphire P1.53" /><pitch pp="1.23" rate="42000" gst="28" sku="Leynna Sapphire P1.23" /><pitch pp="0.95" rate="66000" gst="28" sku="Leynna Sapphire P0.95" />
-    </product>
-  </products>
-</pixelData>
-</script>
-
+<!-- No embedded fallback DB: pricing ships encrypted as pixel-data.enc.json and is
+     decrypted client-side after dealer login (envelope encryption, see Gate). The old
+     plaintext fallback carried stale public rates and has been removed deliberately. -->
 <!-- CDN versions PINNED — never use unpinned URLs on a deployed site.
      Babel 8 broke the in-browser <script type="text/babel"> transform pattern;
      locking to v7 keeps the JSX transform working as designed. -->
@@ -1345,11 +1320,39 @@ const sDef = (k,d)=> SAVED[k]!==undefined ? SAVED[k] : d;
    Later phase can layer a Google Sheet fetch over dealers.json for
    live-editable roster without repo pushes.
    dealers.json stores SHA-256 hashes only — the entered passphrase is
-   hashed with crypto.subtle before compare; no plaintext in the repo. */
+   hashed with crypto.subtle before compare; no plaintext in the repo.
+
+   ENVELOPE ENCRYPTION (2026-10-28): the price DB ships as pixel-data.enc.json
+   (AES-256-GCM under a random data key). Each dealer's keyWrap in dealers.json
+   holds that data key wrapped with a KEK derived from their plaintext passphrase
+   via PBKDF2-SHA256 (per-dealer 16-byte salt, 310000 iterations). On login we
+   derive the KEK, unwrap the data key, and keep it in localStorage so the
+   session survives reloads; decrypt happens in the App db effect. Any unwrap or
+   decrypt failure shows the same generic wrong-passphrase error (fail closed).
+   Regenerate artifacts with Documents\pqm-dealer-encrypt-PRIVATE.mjs (never in repo). */
 async function sha256Hex(s){
   const buf = new TextEncoder().encode(s);
   const hash = await crypto.subtle.digest("SHA-256", buf);
   return Array.from(new Uint8Array(hash)).map(b=>b.toString(16).padStart(2,"0")).join("");
+}
+/* ── envelope-encryption helpers (params must match pqm-dealer-encrypt-PRIVATE.mjs) ── */
+const PBKDF2_ITERS = 310000;
+const b64ToU8 = (s)=> Uint8Array.from(atob(s), c=>c.charCodeAt(0));
+const u8ToB64 = (u8)=> btoa(Array.from(new Uint8Array(u8), b=>String.fromCharCode(b)).join(""));
+async function unwrapDataKey(passphrase, kw){
+  // KEK = PBKDF2-SHA256(passphrase, salt, 310000) → AES-GCM unwrap → raw data key (base64)
+  const mat = await crypto.subtle.importKey("raw", new TextEncoder().encode(passphrase), "PBKDF2", false, ["deriveKey"]);
+  const kek = await crypto.subtle.deriveKey(
+    { name:"PBKDF2", salt:b64ToU8(kw.salt), iterations:PBKDF2_ITERS, hash:"SHA-256" },
+    mat, { name:"AES-GCM", length:256 }, false, ["decrypt"]);
+  const raw = await crypto.subtle.decrypt({ name:"AES-GCM", iv:b64ToU8(kw.iv) }, kek, b64ToU8(kw.ct));
+  return u8ToB64(raw);
+}
+async function decryptDbXml(dataKeyB64, enc){
+  // enc = {v:1, iv, ct} base64 → plaintext XML string (GCM tag verifies integrity)
+  const key = await crypto.subtle.importKey("raw", b64ToU8(dataKeyB64), { name:"AES-GCM" }, false, ["decrypt"]);
+  const pt = await crypto.subtle.decrypt({ name:"AES-GCM", iv:b64ToU8(enc.iv) }, key, b64ToU8(enc.ct));
+  return new TextDecoder().decode(pt);
 }
 function Gate({ onAgree, dealers }){
   const [name,setName] = useState(()=>{ try{ return localStorage.getItem("pqmd_employee")||""; }catch{ return ""; } });
@@ -1388,7 +1391,21 @@ function Gate({ onAgree, dealers }){
       setPw(""); setTimeout(()=>pwRef.current?.focus(), 50);
       return;
     }
+    // Unwrap the price-DB data key with this passphrase. Any failure (missing
+    // keyWrap, tampered blob, params drift) = same generic error — fail closed,
+    // never unlock the app without a working key.
+    let dataKeyB64 = null;
+    try {
+      if (!dealer.keyWrap) throw 0;
+      dataKeyB64 = await unwrapDataKey(pw, dealer.keyWrap);
+    } catch {
+      setChecking(false);
+      setErr("Wrong passphrase for " + dealer.name + ". Check with your dealer admin.");
+      setPw(""); setTimeout(()=>pwRef.current?.focus(), 50);
+      return;
+    }
     setChecking(false);
+    try { localStorage.setItem("pqmd_dk", dataKeyB64); } catch {}
     try {
       localStorage.setItem("pqmd_employee", name.trim());
       localStorage.setItem("pqmd_email", emailLc);
@@ -1696,18 +1713,33 @@ function App(){
     setAgreed(true);
   };
 
-  // load XML db (served) with offline fallback
+  // load the ENCRYPTED XML db — only possible after gate unlock (needs the
+  // unwrapped data key from localStorage). Offline works because the service
+  // worker caches pixel-data.enc.json; there is no plaintext fallback by design.
   useEffect(()=>{
+    if(!agreed) return;
     let done=false;
-    fetch("pixel-data.xml").then(res=>{if(!res.ok)throw 0;return res.text();})
-      .then(txt=>{if(!done){setDb(E.parseDbXml(txt));}})
-      .catch(()=>{
-        const fb=document.getElementById("fallback-db");
-        if(fb){setDb(E.parseDbXml(fb.textContent));setDbErr("offline");}
-        else setDbErr("Could not load pixel-data.xml");
-      });
+    (async()=>{
+      let res=null;
+      try{ res = await fetch("pixel-data.enc.json"); }catch{}
+      if(!res || !res.ok){ if(!done) setDbErr("Could not load the price database. Check your connection and reload."); return; }
+      try{
+        const enc = await res.json();
+        const dk = localStorage.getItem("pqmd_dk");
+        if(!dk) throw 0;
+        const xmlTxt = await decryptDbXml(dk, enc);
+        if(!done) setDb(E.parseDbXml(xmlTxt));
+      }catch{
+        if(done) return;
+        // Stale or missing key (e.g. data key rotated since last login) —
+        // fail closed: drop the session and send them back to the gate.
+        try{ localStorage.removeItem("pqmd_authed"); localStorage.removeItem("pqmd_dk"); }catch{}
+        setAgreed(false);
+        setDbErr("");
+      }
+    })();
     return ()=>{done=true;};
-  },[]);
+  },[agreed]);
 
   const product = db ? E.getProduct(db,productId) : null;
 
@@ -2849,7 +2881,7 @@ body{background:#180d24;color:#1A1208;font-family:'Manrope',sans-serif;-webkit-f
             )}
           </div>
           {/* Employee chip — click to switch identity (clears passphrase too, forces re-auth) */}
-          <button onClick={()=>{ try{ localStorage.removeItem("pqmd_employee"); localStorage.removeItem("pqmd_email"); localStorage.removeItem("pqmd_dealer_id"); localStorage.removeItem("pqmd_authed"); }catch{}; location.reload(); }}
+          <button onClick={()=>{ try{ localStorage.removeItem("pqmd_employee"); localStorage.removeItem("pqmd_email"); localStorage.removeItem("pqmd_dealer_id"); localStorage.removeItem("pqmd_authed"); localStorage.removeItem("pqmd_dk"); }catch{}; location.reload(); }}
             title="Click to sign in as someone else"
             style={{background:`${C.magenta}18`,border:`1px solid ${C.magenta}55`,color:C.lavender,padding:"5px 12px",borderRadius:999,fontSize:10.5,fontFamily:MN,fontWeight:600,letterSpacing:.4,cursor:"pointer",whiteSpace:"nowrap"}}>
             👤 {employee}
@@ -3112,7 +3144,6 @@ body{background:#180d24;color:#1A1208;font-family:'Manrope',sans-serif;-webkit-f
               </>)}
               <Metric label="Grand Total" value={<AnimatedNumber value={result.grandTotal} format={E.fmtINR}/>} accent={C.magenta} sub={`incl. GST · subtotal ${E.fmtINR(result.subtotal)}`}/>
               <div style={{marginTop:14,padding:12,background:C.navy,borderRadius:8,fontSize:11,color:C.lavender,opacity:.7,fontFamily:MO,lineHeight:1.5}}>
-                {dbErr==="offline"?"⚠ Using built-in price fallback (open via a web server to read pixel-data.xml). ":""}
                 Export PDF generates a clean spec + quote sheet with drawings.
               </div>
             </Panel>

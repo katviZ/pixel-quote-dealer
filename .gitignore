@@ -1,3 +1,9 @@
+# Dealer pricing stays OUT of the public repo (2026-10-28 envelope encryption).
+# pixel-data.xml = plaintext master, lives on disk only; ships as pixel-data.enc.json.
+# test.mjs asserts dealer rates in plaintext, so it stays local-only too.
+pixel-data.xml
+test.mjs
+
 # Verification artifacts
 v-*.png
 v-*.pdf
